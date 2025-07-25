@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Water Access Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    .login-container, .dashboard {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; }
+    input, select, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .hidden { display: none; }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    canvas { margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="login-container" id="login-box">
+  <h2>Login</h2>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div class="dashboard hidden" id="dashboard">
+  <h2>Water Usage Dashboard</h2>
+  <p>Welcome, <span id="userDisplay"></span></p>
+  <select id="slum">
+    <option value="Kibera">Kibera</option>
+    <option value="Mathare">Mathare</option>
+    <option value="Mukuru">Mukuru</option>
+  </select>
+  <input type="number" id="litres" placeholder="Enter water used (Litres)" />
+  <input type="text" id="report" placeholder="Report issue (optional)" />
+  <button onclick="submitEntry()">Submit</button>
+
+  <table id="entries">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Slum</th>
+        <th>Litres</th>
+        <th>Report</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <canvas id="chart" width="600" height="300"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const users = {
+    user1: 'pass1', user2: 'pass2', user3: 'pass3',
+    user4: 'pass4', user5: 'pass5', user6: 'pass6',
+    user7: 'pass7', user8: 'pass8', user9: 'pass9', user10: 'pass10'
+  };
+
+  let currentUser = '';
+  let dataEntries = JSON.parse(localStorage.getItem('waterEntries') || '[]');
+
+  function login() {
+    const u = document.getElementById('username').value;
+    const p = document.getElementById('password').value;
+    if (users[u] === p) {
+      currentUser = u;
+      document.getElementById('login-box').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      document.getElementById('userDisplay').textContent = u;
+      renderTable();
+      renderChart();
+    } else {
+      alert('Invalid login');
+    }
+  }
+
+  function submitEntry() {
+    const slum = document.getElementById('slum').value;
+    const litres = parseInt(document.getElementById('litres').value);
+    const report = document.getElementById('report').value;
+    if (!litres) return alert('Enter litres used');
+
+    const entry = {
+      user: currentUser,
+      slum,
+      litres,
+      report,
+      date: new Date().toLocaleString()
+    };
+    dataEntries.push(entry);
+    localStorage.setItem('waterEntries', JSON.stringify(dataEntries));
+    renderTable();
+    renderChart();
+    document.getElementById('litres').value = '';
+    document.getElementById('report').value = '';
+  }
+
+  function renderTable() {
+    const tbody = document.querySelector('#entries tbody');
+    tbody.innerHTML = '';
+    dataEntries.forEach(e => {
+      tbody.innerHTML += `<tr>
+        <td>${e.user}</td>
+        <td>${e.slum}</td>
+        <td>${e.litres}</td>
+        <td>${e.report}</td>
+        <td>${e.date}</td>
+      </tr>`;
+    });
+  }
+
+  function renderChart() {
+    const ctx = document.getElementById('chart').getContext('2d');
+    const slumTotals = { Kibera: 0, Mathare: 0, Mukuru: 0 };
+    dataEntries.forEach(e => slumTotals[e.slum] += e.litres);
+
+    if (window.chart) window.chart.destroy();
+    window.chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(slumTotals),
+        datasets: [{
+          label: 'Total Litres Used per Slum',
+          data: Object.values(slumTotals),
+          backgroundColor: ['#007bff', '#28a745', '#dc3545']
+        }]
+      }
+    });
+  }
+</script>
+</body>
+</html>
