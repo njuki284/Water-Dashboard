@@ -1,0 +1,169 @@
+<!-- Water Dashboard: HTML Template (Phase 2) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Water Access & Monitoring Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .hidden { display: none; }
+  </style>
+</head>
+<body class="bg-white text-gray-800">
+  <div id="app" class="p-4">
+    <div id="login-screen">
+      <h1 class="text-2xl font-bold mb-4">Login</h1>
+      <input id="username" type="text" placeholder="Username" class="border p-2 mb-2 block w-full">
+      <input id="password" type="password" placeholder="Password" class="border p-2 mb-2 block w-full">
+      <button onclick="login()" class="bg-blue-600 text-white px-4 py-2">Login</button>
+    </div>
+
+    <div id="dashboard" class="hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Water Dashboard</h2>
+        <button onclick="logout()" class="bg-red-500 text-white px-3 py-1">Logout</button>
+      </div>
+
+      <div id="admin-controls" class="hidden mb-6">
+        <h3 class="text-lg font-bold mb-2">Admin Panel</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <textarea id="admin-feedback" rows="4" class="border p-2 w-full" placeholder="Review user reports here..."></textarea>
+          <div>
+            <label class="block mb-1">Add New Water Point:</label>
+            <input id="new-point" class="border p-2 w-full" placeholder="e.g. Kibera Tank 3">
+            <button class="bg-green-600 text-white mt-2 px-4 py-1" onclick="addPoint()">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <h4 class="font-semibold">Enter Water Level (Litres)</h4>
+          <select id="location-select" class="border p-2 w-full mb-2">
+            <option value="Kibera">Kibera</option>
+            <option value="Mathare">Mathare</option>
+            <option value="Mukuru">Mukuru</option>
+          </select>
+          <input id="water-level" type="number" class="border p-2 w-full mb-2" placeholder="Water level in litres">
+          <button class="bg-blue-500 text-white px-4 py-2" onclick="saveWaterData()">Save</button>
+        </div>
+
+        <div>
+          <h4 class="font-semibold">Enter Usage (Litres)</h4>
+          <input id="usage-entry" type="number" class="border p-2 w-full mb-2" placeholder="How much water did you use?">
+          <button class="bg-purple-600 text-white px-4 py-2" onclick="logUsage()">Submit</button>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h4 class="font-semibold">Charts</h4>
+        <canvas id="waterChart" class="w-full max-w-lg"></canvas>
+        <canvas id="usageChart" class="w-full max-w-lg mt-4"></canvas>
+      </div>
+
+      <div class="mt-6">
+        <h4 class="font-semibold">Submit Feedback or Report</h4>
+        <textarea id="feedback" rows="3" class="border p-2 w-full mb-2" placeholder="e.g. Pipe leak at Mukuru"></textarea>
+        <button class="bg-yellow-500 text-white px-4 py-2" onclick="submitFeedback()">Report</button>
+      </div>
+
+      <div class="mt-6">
+        <h4 class="font-semibold">Schedule Water Delivery</h4>
+        <input id="schedule-time" type="text" class="border p-2 mb-2 w-full" placeholder="e.g. Kibera, 9AM Tomorrow">
+        <button class="bg-green-500 text-white px-4 py-2" onclick="scheduleDelivery()">Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const users = {
+      user1: 'pass1', user2: 'pass2', user3: 'pass3', user4: 'pass4',
+      user5: 'pass5', user6: 'pass6', user7: 'pass7', user8: 'pass8',
+      user9: 'pass9', user10: 'pass10', admin: 'adminpass'
+    };
+    let currentUser = null;
+    let waterData = [];
+    let usageData = [];
+
+    function login() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      if (users[u] && users[u] === p) {
+        currentUser = u;
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+        if (u === 'admin') document.getElementById('admin-controls').classList.remove('hidden');
+        updateCharts();
+      } else alert('Invalid login');
+    }
+
+    function logout() {
+      location.reload();
+    }
+
+    function saveWaterData() {
+      const loc = document.getElementById('location-select').value;
+      const lvl = parseInt(document.getElementById('water-level').value);
+      if (lvl) {
+        waterData.push({ location: loc, level: lvl, user: currentUser });
+        updateCharts();
+      }
+    }
+
+    function logUsage() {
+      const val = parseInt(document.getElementById('usage-entry').value);
+      if (val) {
+        usageData.push({ litres: val, user: currentUser });
+        updateCharts();
+      }
+    }
+
+    function submitFeedback() {
+      const msg = document.getElementById('feedback').value;
+      alert('Feedback submitted: ' + msg);
+    }
+
+    function scheduleDelivery() {
+      const sched = document.getElementById('schedule-time').value;
+      alert('Delivery Scheduled: ' + sched);
+    }
+
+    function addPoint() {
+      const point = document.getElementById('new-point').value;
+      alert('New point added: ' + point);
+    }
+
+    function updateCharts() {
+      const ctx1 = document.getElementById('waterChart').getContext('2d');
+      const ctx2 = document.getElementById('usageChart').getContext('2d');
+
+      new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: waterData.map(d => d.location),
+          datasets: [{
+            label: 'Water Level (L)',
+            data: waterData.map(d => d.level),
+            backgroundColor: 'rgba(54, 162, 235, 0.6)'
+          }]
+        }
+      });
+
+      new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels: usageData.map((d, i) => `Day ${i+1}`),
+          datasets: [{
+            label: 'Usage (L)',
+            data: usageData.map(d => d.litres),
+            borderColor: 'rgba(255, 99, 132, 1)',
+            fill: false
+          }]
+        }
+      });
+    }
+  </script>
+</body>
+</html>
