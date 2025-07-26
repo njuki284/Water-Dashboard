@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nairobi Water Access Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #0077cc;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    main {
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #0077cc;
+    }
+    label, select, input, button {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    .chart-container {
+      margin-top: 30px;
+    }
+    .objectives {
+      background: #e8f4ff;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Nairobi Water Dashboard</h1>
+    <p>Improving water access in Kibera, Mathare, and Mukuru</p>
+  </header>
+
+  <main>
+    <div class="objectives">
+      <h2>Project Objectives</h2>
+      <p><strong>General Objective:</strong> To design a dashboard that improves water access, monitoring, and distribution in Nairobi’s informal settlements.</p>
+      <ul>
+        <li>1. Enable real-time water availability tracking</li>
+        <li>2. Monitor individual and community water usage</li>
+        <li>3. Integrate transparent payment and billing system</li>
+        <li>4. Provide location-based mapping of water points</li>
+        <li>5. Implement crowdsourced feedback/reporting</li>
+        <li>6. Schedule efficient water distribution</li>
+      </ul>
+    </div>
+
+    <h2>Water Usage Entry</h2>
+    <label for="username">User</label>
+    <select id="username">
+      <option>user1</option>
+      <option>user2</option>
+      <option>user3</option>
+      <option>user4</option>
+      <option>user5</option>
+      <option>user6</option>
+      <option>user7</option>
+      <option>user8</option>
+      <option>user9</option>
+      <option>user10</option>
+    </select>
+    <label for="slum">Slum Area</label>
+    <select id="slum">
+      <option>Kibera</option>
+      <option>Mathare</option>
+      <option>Mukuru</option>
+    </select>
+    <label for="litres">Litres Used</label>
+    <input type="number" id="litres" placeholder="Enter litres" />
+    <button onclick="submitEntry()">Submit</button>
+
+    <h2>Usage Records</h2>
+    <table id="records">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Area</th>
+          <th>Litres</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="chart-container">
+      <h2>Water Usage Summary</h2>
+      <canvas id="chart" width="600" height="300"></canvas>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const table = document.querySelector("#records tbody");
+    let usageData = JSON.parse(localStorage.getItem("usageData") || "[]");
+
+    function submitEntry() {
+      const user = document.getElementById("username").value;
+      const slum = document.getElementById("slum").value;
+      const litres = document.getElementById("litres").value;
+      const date = new Date().toLocaleString();
+      if (!litres) return alert("Enter litres used");
+      const row = { user, slum, litres: parseInt(litres), date };
+      usageData.push(row);
+      localStorage.setItem("usageData", JSON.stringify(usageData));
+      renderTable();
+      renderChart();
+    }
+
+    function renderTable() {
+      table.innerHTML = "";
+      usageData.forEach(r => {
+        table.innerHTML += `<tr><td>${r.user}</td><td>${r.slum}</td><td>${r.litres}</td><td>${r.date}</td></tr>`;
+      });
+    }
+
+    function renderChart() {
+      const slumGroups = { Kibera: 0, Mathare: 0, Mukuru: 0 };
+      usageData.forEach(r => { slumGroups[r.slum] += r.litres });
+      const ctx = document.getElementById("chart").getContext("2d");
+      if (window.myChart) window.myChart.destroy();
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(slumGroups),
+          datasets: [{
+            label: 'Litres Used',
+            data: Object.values(slumGroups),
+            backgroundColor: ['#3498db', '#2ecc71', '#f39c12']
+          }]
+        }
+      });
+    }
+
+    window.onload = () => {
+      renderTable();
+      renderChart();
+    };
+  </script>
+</body>
+</html>
