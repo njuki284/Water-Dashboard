@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Water Access Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: var(--bg);
+      color: var(--text);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    :root {
+      --bg: #ffffff;
+      --text: #000000;
+    }
+
+    .dark-mode {
+      --bg: #121212;
+      --text: #ffffff;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      background-color: #0077cc;
+      color: white;
+      padding: 10px;
+    }
+
+    nav button {
+      margin: 0 5px;
+    }
+
+    .tab {
+      display: none;
+      padding: 20px;
+    }
+
+    .tab.active {
+      display: block;
+    }
+
+    form input, form select {
+      display: block;
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+    }
+
+    form button {
+      padding: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <div>
+      <button onclick="showTab('dashboard')">Dashboard</button>
+      <button onclick="showTab('usage')">Water Usage</button>
+      <button onclick="showTab('connection')">Apply for Water</button>
+      <button onclick="showTab('payments')">Payments</button>
+      <button onclick="showTab('feedback')">Feedback</button>
+    </div>
+    <div>
+      <button onclick="toggleMode()">🌓 Toggle Theme</button>
+    </div>
+  </nav>
+
+  <div id="dashboard" class="tab active">
+    <h2>Welcome to the Water Access Dashboard</h2>
+    <p>Track water usage, apply for services, and monitor progress in Kibera, Mathare, and Mukuru.</p>
+  </div>
+
+  <div id="usage" class="tab">
+    <h2>Water Usage Graphs</h2>
+    <canvas id="usageChart"></canvas>
+  </div>
+
+  <div id="connection" class="tab">
+    <h2>Water Connection Application</h2>
+    <form onsubmit="saveConnection(event)">
+      <input type="text" placeholder="Full Name" required />
+      <input type="text" placeholder="ID Number" required />
+      <input type="text" placeholder="Phone Number" required />
+      <select required>
+        <option value="">Select Slum</option>
+        <option>Kibera</option>
+        <option>Mathare</option>
+        <option>Mukuru</option>
+      </select>
+      <input type="text" placeholder="Reason for Connection" required />
+      <button type="submit">Submit Application</button>
+    </form>
+  </div>
+
+  <div id="payments" class="tab">
+    <h2>Water Payment Form</h2>
+    <form onsubmit="savePayment(event)">
+      <input type="text" placeholder="Phone Number" required />
+      <input type="number" placeholder="Amount Paid (KES)" required />
+      <input type="text" placeholder="Transaction Code" required />
+      <select required>
+        <option value="">Select Slum</option>
+        <option>Kibera</option>
+        <option>Mathare</option>
+        <option>Mukuru</option>
+      </select>
+      <button type="submit">Submit Payment</button>
+    </form>
+  </div>
+
+  <div id="feedback" class="tab">
+    <h2>Feedback</h2>
+    <textarea rows="5" style="width: 100%;"></textarea>
+    <br />
+    <button onclick="alert('Feedback submitted!')">Submit Feedback</button>
+  </div>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function saveConnection(e) {
+      e.preventDefault();
+      alert("Application Submitted Successfully!");
+    }
+
+    function savePayment(e) {
+      e.preventDefault();
+      alert("Payment Recorded Successfully!");
+    }
+
+    const ctx = document.getElementById('usageChart');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Kibera', 'Mathare', 'Mukuru'],
+        datasets: [{
+          label: 'Water Usage (Litres)',
+          data: [1200, 950, 1100],
+          backgroundColor: ['#3498db', '#2ecc71', '#e67e22']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'Water Usage by Slum Area'
+          }
+        }
+      },
+    });
+  </script>
+</body>
+
+</html>
