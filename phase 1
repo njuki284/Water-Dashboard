@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Water Access Dashboard - Phase 1</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      color: #333;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+    }
+    .section {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    label, select, input {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    input[type="number"], select {
+      padding: 8px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    canvas {
+      margin-top: 20px;
+      width: 100% !important;
+      height: 300px !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Water Access & Usage Dashboard - Phase 1</h1>
+
+    <div class="section">
+      <h2>1. Daily Water Availability (Per Slum)</h2>
+      <label for="slum">Select Slum:</label>
+      <select id="slum">
+        <option value="Kibera">Kibera</option>
+        <option value="Mathare">Mathare</option>
+        <option value="Mukuru">Mukuru</option>
+      </select>
+      <label for="availability">Water Available (Litres):</label>
+      <input type="number" id="availability" />
+      <button onclick="submitAvailability()">Submit Availability</button>
+      <canvas id="availabilityChart"></canvas>
+    </div>
+
+    <div class="section">
+      <h2>2. Individual Water Usage Entry</h2>
+      <label for="username">Your Username:</label>
+      <input type="text" id="username" />
+      <label for="usage">Water Used Today (Litres):</label>
+      <input type="number" id="usage" />
+      <button onclick="submitUsage()">Submit Usage</button>
+      <canvas id="usageChart"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const availabilityData = JSON.parse(localStorage.getItem("availabilityData") || "{}");
+    const usageData = JSON.parse(localStorage.getItem("usageData") || "{}");
+
+    function submitAvailability() {
+      const slum = document.getElementById("slum").value;
+      const amount = parseInt(document.getElementById("availability").value);
+      const today = new Date().toLocaleDateString();
+
+      if (!availabilityData[slum]) availabilityData[slum] = [];
+      availabilityData[slum].push({ date: today, litres: amount });
+      localStorage.setItem("availabilityData", JSON.stringify(availabilityData));
+      renderAvailabilityChart();
+    }
+
+    function submitUsage() {
+      const user = document.getElementById("username").value.trim();
+      const litres = parseInt(document.getElementById("usage").value);
+      const today = new Date().toLocaleDateString();
+
+      if (!usageData[user]) usageData[user] = [];
+      usageData[user].push({ date: today, litres });
+      localStorage.setItem("usageData", JSON.stringify(usageData));
+      renderUsageChart(user);
+    }
+
+    function renderAvailabilityChart() {
+      const ctx = document.getElementById("availabilityChart").getContext("2d");
+      const labels = [];
+      const datasets = [];
+
+      for (let slum in availabilityData) {
+        const slumData = availabilityData[slum];
+        const slumLabels = slumData.map(e => e.date);
+        slumLabels.forEach(label => {
+          if (!labels.includes(label)) labels.push(label);
+        });
+      }
+
+      for (let slum in availabilityData) {
+        const dataMap = {};
+        availabilityData[slum].forEach(e => dataMap[e.date] = e.litres);
+        const data = labels.map(date => dataMap[date] || 0);
+        datasets.push({
+          label: slum,
+          data,
+          fill: false,
+          borderColor: randomColor(),
+          tension: 0.1
+        });
+      }
+
+      new Chart(ctx, {
+        type: "line",
+        data: { labels, datasets },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function renderUsageChart(user) {
+      const ctx = document.getElementById("usageChart").getContext("2d");
+      const entries = usageData[user] || [];
+      const labels = entries.map(e => e.date);
+      const data = entries.map(e => e.litres);
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: `Usage by ${user}`,
+            data,
+            backgroundColor: "#007bff"
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function randomColor() {
+      return `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`;
+    }
+
+    // Auto-load charts if data exists
+    renderAvailabilityChart();
+  </script>
+</body>
+</html>
